@@ -33,7 +33,8 @@ VibeScout Web is a self-hosted web dashboard and API for collecting songs recogn
 | Variable | Required | Default | Description |
 |---|---|---|---|
 | `ADMIN_PASSWORD` | **Yes** (production) | *none* | Password for the admin login page. If unset, admin login will always fail. |
-| `ADMIN_SECRET` | **Yes** (production) | Random ephemeral value | Secret key used to HMAC-sign admin session cookies. Must be a strong random string (≥32 characters). If unset, a random value is generated at startup — sessions will not survive server restarts. |
+| `ADMIN_SECRET` | **Yes** (production) | Random ephemeral value | Secret key used to HMAC-sign admin session cookies. **Must be set in production** — without it, different server contexts generate different random secrets, causing session verification to fail. |
+| `DATABASE_URL` | **Yes** (production) | `file:./dev.db` | SQLite connection string. In production (Coolify), use an absolute path on a persistent volume, e.g. `file:/data/vibescout.db`. |
 | `NODE_ENV` | Recommended | `development` | Set to `production` in production. Controls: secure cookies (`Secure` flag), CSP strictness, Prisma client caching. |
 
 ### Generating secrets
@@ -43,9 +44,10 @@ VibeScout Web is a self-hosted web dashboard and API for collecting songs recogn
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
-### Example `.env.local`
+### Example `.env`
 
 ```env
+DATABASE_URL="file:./dev.db"
 ADMIN_PASSWORD=your-strong-admin-password
 ADMIN_SECRET=a64charhexstringgeneratedabove...
 ```
@@ -73,27 +75,68 @@ The app runs at `http://localhost:3000`. The SQLite database is stored at `dev.d
 
 ## Production Deployment
 
-```bash
-# 1. Set environment variables (ADMIN_PASSWORD, ADMIN_SECRET, NODE_ENV=production)
+The build script automatically runs `prisma generate` before `next build`, and the start script runs `prisma migrate deploy` before `next start`.
 
-# 2. Install dependencies & build
+```bash
+# 1. Set environment variables
+#    ADMIN_PASSWORD, ADMIN_SECRET, DATABASE_URL, NODE_ENV=production
+
+# 2. Install dependencies & build (prisma generate runs automatically)
 npm install
 npm run build
 
-# 3. Apply database migrations
-npx prisma migrate deploy
-
-# 4. Start the server
+# 3. Start the server (prisma migrate deploy runs automatically)
 npm start
 ```
 
+### Deploying on Coolify (Nixpacks)
+
+This project includes a `nixpacks.toml` and `.node-version` for Coolify/Nixpacks deployments.
+
+#### 1. Create the application
+
+Link your GitHub repo in Coolify. The build pack should auto-detect as **Nixpacks**.
+
+#### 2. Set environment variables
+
+In Coolify → your app → **Environment Variables**, add:
+
+| Variable | Value |
+|---|---|
+| `ADMIN_PASSWORD` | A strong password for the admin panel |
+| `ADMIN_SECRET` | A 64-char hex string (see "Generating secrets" above) |
+| `DATABASE_URL` | `file:/data/vibescout.db` |
+| `NODE_ENV` | `production` |
+
+#### 3. Configure persistent storage
+
+In Coolify → your app → **Storages**, add a volume:
+
+| Setting | Value |
+|---|---|
+| **Destination Path** (container) | `/data` |
+| **Source Path** (host) | Leave blank or e.g. `/var/lib/coolify/vibescout-data` |
+
+The SQLite database **must** be stored outside `/app` — Nixpacks replaces that directory on every build.
+
+#### 4. Deploy
+
+Coolify runs `npm run build` (which includes `prisma generate && next build`) during the build phase, and `npm start` (which includes `prisma migrate deploy && next start`) at runtime. Migrations are applied automatically on every startup.
+
+#### Node.js version
+
+The `nixpacks.toml` pins a specific nixpkgs archive to ensure Node.js ≥22.12 (required by Prisma 7.x). The `.node-version` file requests Node 22.
+
+The `nixpacks.toml` also overrides the install phase to remove `package-lock.json` and run a fresh `npm install` on Linux, working around an [npm bug with optional dependencies](https://github.com/npm/cli/issues/4828) that prevents platform-specific native binaries (lightningcss, better-sqlite3) from being installed correctly.
+
 ### Production Considerations
 
-- **Database location** — SQLite persists to `dev.db` in the working directory. Ensure this path has write permissions and is included in backups.
+- **Database location** — SQLite persists to a file specified by `DATABASE_URL`. In development, this defaults to `./dev.db` in the project root. In production, use an absolute path on a persistent volume (e.g. `file:/data/vibescout.db`).
+- **Migrations** — `prisma migrate deploy` runs automatically on startup via the `start` script. No manual migration step needed.
 - **Rate limiting** — The rate limiter is in-memory. In a multi-process or multi-instance deployment, it won't share state across workers. Swap to Redis if running multiple instances.
 - **CSP headers** — In production, the Content-Security-Policy header does **not** include `unsafe-eval`. In development it does (React requires it for debugging).
 - **CSRF protection** — All mutating requests to `/api/admin/*` verify the `Origin` header matches the `Host` header.
-- **Session cookies** — In production, cookies are set with `Secure`, `HttpOnly`, `SameSite=Strict`, and a 24-hour expiry. You must serve the app over HTTPS.
+- **Session cookies** — In production, cookies are set with `Secure`, `HttpOnly`, `SameSite=Lax`, and a 24-hour expiry. You must serve the app over HTTPS.
 
 ---
 
@@ -245,7 +288,7 @@ All admin endpoints require a valid session cookie (set by the login flow).
 |---|---|
 | Admin password | Compared with timing-safe equality against `ADMIN_PASSWORD` env var |
 | Admin session | HMAC-SHA256 signed cookie (`admin:<expiry>.<signature>`), 24h TTL |
-| Cookies | `HttpOnly`, `SameSite=Strict`, `Secure` (production only) |
+| Cookies | `HttpOnly`, `SameSite=Lax`, `Secure` (production only) |
 | API keys | SHA-256 hashed before storage; plaintext shown once at creation |
 | CSRF | Origin header checked against Host on admin mutations |
 | Rate limiting | 5 login attempts/min/IP, 30 track submissions/min/device |
