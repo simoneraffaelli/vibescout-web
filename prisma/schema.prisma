@@ -1,0 +1,27 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Device {
+  id           Int      @id @default(autoincrement())
+  name         String
+  apiKeyHash   String   @unique
+  apiKeyPrefix String
+  enabled      Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  tracks       Track[]
+}
+
+model Track {
+  id        Int      @id @default(autoincrement())
+  title     String
+  artist    String
+  spottedAt DateTime @default(now())
+  device    Device   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  deviceId  Int
+}
