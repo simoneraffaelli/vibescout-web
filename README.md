@@ -1,6 +1,13 @@
+inspired by [BopSpotter](https://walzr.com/bop-spotter) by [Riley Waltz](https://x.com/rtwlz) \
+uses: 
+ - [SongRec](https://github.com/marin-m/SongRec) for fingerprinting
+ - [Shazam](https://www.shazam.com/) for recognizing
+
+---
+
 # VibeScout Web — Usage Guide
 
-VibeScout Web is a self-hosted web dashboard and API for collecting songs recognized by [SongRec](https://github.com/marin-m/SongRec) (or any compatible client). Devices push recognized tracks via a REST API, and users browse the live feed from a web UI. An admin panel manages devices and their API keys.
+VibeScout Web is a self-hosted web dashboard and API for collecting songs recognized by [VibeScout](https://github.com/simoneraffaelli/vibescout-app) (or any compatible client). Devices push recognized tracks via a REST API, and users browse the live feed from a web UI. An admin panel manages devices and their API keys.
 
 ---
 
@@ -254,7 +261,7 @@ A minimal shell script to push a track from a device:
 ```bash
 #!/bin/bash
 API_KEY="srk_your_key_here"
-HOST="https://your-songrec-web.example.com"
+HOST="https://your-domain-web.example.com"
 
 curl -X POST "$HOST/api/tracks" \
   -H "Authorization: Bearer $API_KEY" \
