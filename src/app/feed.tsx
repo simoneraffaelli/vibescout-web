@@ -120,7 +120,7 @@ export default function Feed({ initialTracks, initialCursor, onTrackClick, selec
         {scoutCta}
       </div>
 
-        <div className="sticky top-0 z-10 pb-4">
+        <div className="sticky top-0 z-10 pb-4 px-4 md:px-4">
           <h2 className="font-serif text-3xl text-white mb-2">Feed</h2>
           <div className="flex items-center gap-1.5">
             <span className={`inline-block h-2 w-2 rounded-full ${onlineScouts > 0 ? "bg-green-400 shadow-[0_0_6px_rgba(74,222,128,0.6)]" : "bg-gray-600"}`} />
