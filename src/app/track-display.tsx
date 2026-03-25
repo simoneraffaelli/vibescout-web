@@ -91,18 +91,12 @@ export default function TrackDisplay({ initialTracks, initialCursor, onlineScout
 
       {/* ── Feed sidebar (right on desktop, below on mobile) ── */}
       <aside className="w-full md:w-[350px] flex-shrink-0 flex flex-col py-4 md:py-8 px-4 md:px-0 md:pr-8 z-10 min-h-0 md:max-h-none">
-        <h2 className="font-serif text-3xl text-white mb-2 px-0 md:px-4">Feed</h2>
-        <div className="flex items-center gap-1.5 mb-4 px-0 md:px-4">
-          <span className={`inline-block h-2 w-2 rounded-full ${onlineScouts > 0 ? "bg-green-400 shadow-[0_0_6px_rgba(74,222,128,0.6)]" : "bg-gray-600"}`} />
-          <span className="text-xs text-gray-400">
-            {onlineScouts} scout{onlineScouts !== 1 && "s"} online
-          </span>
-        </div>
         <Feed
           initialTracks={initialTracks}
           initialCursor={initialCursor}
           onTrackClick={setSelectedTrack}
           selectedTrackId={selectedTrack?.id ?? null}
+          onlineScouts={onlineScouts}
         />
       </aside>
     </>
