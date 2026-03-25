@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { authenticateDevice } from "@/lib/auth";
 import { rateLimit } from "@/lib/rate-limit";
+import { fetchCoverUrl } from "@/lib/musicbrainz";
 
 const MAX_TITLE_LENGTH = 500;
 const MAX_ARTIST_LENGTH = 500;
@@ -73,8 +74,11 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Fetch cover art from MusicBrainz / Cover Art Archive
+  const coverUrl = await fetchCoverUrl(title, artist);
+
   const track = await prisma.track.create({
-    data: { title, artist, deviceId: auth.device.id },
+    data: { title, artist, coverUrl, deviceId: auth.device.id },
   });
 
   return NextResponse.json(track, { status: 201 });

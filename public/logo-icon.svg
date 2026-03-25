@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none" stroke="#7c3aed" stroke-width="20" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Outer circle -->
+  <circle cx="256" cy="256" r="155" />
+  <!-- Compass points: top -->
+  <path d="M256 40 L275 101 L256 80 L237 101 Z" fill="#7c3aed" stroke="none"/>
+  <!-- Compass points: bottom -->
+  <path d="M256 472 L275 411 L256 432 L237 411 Z" fill="#7c3aed" stroke="none"/>
+  <!-- Compass points: left -->
+  <path d="M40 256 L101 237 L80 256 L101 275 Z" fill="#7c3aed" stroke="none"/>
+  <!-- Compass points: right -->
+  <path d="M472 256 L411 275 L432 256 L411 237 Z" fill="#7c3aed" stroke="none"/>
+  <!-- Location pin body -->
+  <path d="M256 410 C256 410 200 320 200 250 A56 56 0 1 1 312 250 C312 320 256 410 256 410 Z" fill="none" stroke-width="22"/>
+  <!-- V check inside pin -->
+  <path d="M224 238 L252 270 L288 225" fill="none" stroke-width="22"/>
+  <!-- Left signal waves -->
+  <path d="M72 230 Q55 256 72 282" fill="none" stroke-width="16"/>
+  <path d="M50 218 Q25 256 50 294" fill="none" stroke-width="16"/>
+  <!-- Right signal waves -->
+  <path d="M440 230 Q457 256 440 282" fill="none" stroke-width="16"/>
+  <path d="M462 218 Q487 256 462 294" fill="none" stroke-width="16"/>
+</svg>

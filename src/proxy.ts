@@ -18,7 +18,7 @@ export function proxy(req: NextRequest) {
       : "'self' 'unsafe-inline'";
   res.headers.set(
     "Content-Security-Policy",
-    `default-src 'self'; script-src ${scriptSrc}; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'`
+    `default-src 'self'; script-src ${scriptSrc}; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://coverartarchive.org https://archive.org https://*.archive.org; font-src 'self'; connect-src 'self'; frame-ancestors 'none'`
   );
 
   // ── CSRF protection for admin mutation routes ──────────
