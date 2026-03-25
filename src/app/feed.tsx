@@ -120,19 +120,21 @@ export default function Feed({ initialTracks, initialCursor, onTrackClick, selec
         {scoutCta}
       </div>
 
-        <div className="sticky top-0 z-10 pb-4 px-4 md:px-4">
-          <h2 className="font-serif text-3xl text-white mb-2">Feed</h2>
-          <div className="flex items-center gap-1.5">
-            <span className={`inline-block h-2 w-2 rounded-full ${onlineScouts > 0 ? "bg-green-400 shadow-[0_0_6px_rgba(74,222,128,0.6)]" : "bg-gray-600"}`} />
-            <span className="text-xs text-gray-400">
-              {onlineScouts} scout{onlineScouts !== 1 && "s"} online
-            </span>
+      <div className="flex-1 overflow-y-auto custom-scrollbar">
+        <div className="sticky top-0 inset-0 z-10 md:bg-gray-900">
+          <div className="pb-4 px-4">
+            <h2 className="font-serif text-3xl text-white mb-2">Feed</h2>
+            <div className="flex items-center gap-1.5">
+              <span className={`inline-block h-2 w-2 rounded-full ${onlineScouts > 0 ? "bg-green-400 shadow-[0_0_6px_rgba(74,222,128,0.6)]" : "bg-gray-600"}`} />
+              <span className="text-xs text-gray-400">
+                {onlineScouts} scout{onlineScouts !== 1 && "s"} online
+              </span>
+            </div>
           </div>
         </div>
-
-      <div className="flex-1 overflow-y-auto custom-scrollbar px-4 md:px-4">
-
-        <ul className="space-y-4 md:space-y-6 relative">
+        
+        <div className="px-4">
+                  <ul className="space-y-4 md:space-y-6 relative">
           {tracks.map((track) => {
             const { date, time, dot } = formatSpottedAt(track.spottedAt);
             return (
@@ -223,6 +225,8 @@ export default function Feed({ initialTracks, initialCursor, onTrackClick, selec
             </button>
           </div>
         )}
+        </div>
+
       </div>
 
       {/* CTA at bottom of feed (desktop only) */}
