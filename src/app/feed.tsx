@@ -82,10 +82,42 @@ export default function Feed({ initialTracks, initialCursor }: FeedProps) {
     }
   }, [cursor, loading]);
 
+  const scoutCta = (
+    <a
+      href="https://github.com/simoneraffaelli/vibescout-web/blob/main/become-a-scout.md"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="w-full glass-panel glow-yellow py-3 px-4 flex justify-between items-center text-sm text-gray-300 hover:text-white transition-colors rounded-xl hover:bg-white/10 no-underline"
+    >
+      <span>Become a Scout</span>
+      <span className="flex items-center gap-2 text-white">
+        <svg
+          className="w-3.5 h-3.5 opacity-70"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
+          />
+        </svg>
+        Sign Up
+      </span>
+    </a>
+  );
+
   return (
     <>
-      <div className="flex-1 overflow-y-auto custom-scrollbar px-4">
-        <ul className="space-y-6 relative">
+      {/* CTA above feed on mobile */}
+      <div className="md:hidden px-4 mb-4 flex-shrink-0">
+        {scoutCta}
+      </div>
+
+      <div className="flex-1 overflow-y-auto custom-scrollbar px-4 md:px-4">
+        <ul className="space-y-4 md:space-y-6 relative">
           {tracks.map((track) => {
             const { date, time, dot } = formatSpottedAt(track.spottedAt);
             return (
@@ -104,7 +136,7 @@ export default function Feed({ initialTracks, initialCursor }: FeedProps) {
                       {date}
                     </p>
                     <p
-                      className={`text-3xl font-serif ${dot.timeColor} leading-none mt-0.5`}
+                      className={`text-2xl md:text-3xl font-serif ${dot.timeColor} leading-none mt-0.5`}
                     >
                       {time}
                     </p>
@@ -165,30 +197,9 @@ export default function Feed({ initialTracks, initialCursor }: FeedProps) {
         )}
       </div>
 
-      {/* CTA at bottom of feed */}
-      <div className="mt-6 px-4 flex-shrink-0">
-        <a
-          href="#"
-          className="w-full glass-panel glow-yellow py-3 px-4 flex justify-between items-center text-sm text-gray-300 hover:text-white transition-colors rounded-xl hover:bg-white/10 no-underline"
-        >
-          <span>Become a Scout</span>
-          <span className="flex items-center gap-2 text-white">
-            <svg
-              className="w-3.5 h-3.5 opacity-70"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
-              />
-            </svg>
-            Sign Up
-          </span>
-        </a>
+      {/* CTA at bottom of feed (desktop only) */}
+      <div className="hidden md:block mt-6 px-4 flex-shrink-0">
+        {scoutCta}
       </div>
     </>
   );

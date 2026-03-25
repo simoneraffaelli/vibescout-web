@@ -29,14 +29,23 @@ export default async function Home() {
   const latest = tracks[0] ?? null;
 
   return (
-    <div className="h-screen w-screen flex flex-col relative overflow-hidden">
+    <div className="min-h-screen md:h-screen w-screen flex flex-col relative overflow-x-hidden md:overflow-hidden">
       {/* ── Background gradient ── */}
       <div className="absolute inset-0 bg-gradient-to-r from-gray-900 via-gray-900/40 to-gray-900 -z-10" />
 
-      {/* ── Main layout (above footer) ── */}
-      <div className="flex flex-1 overflow-hidden pl-20 pb-[60px]">
-        {/* ── Left sidebar + About card hover group ── */}
-        <div className="group/sidebar fixed left-0 top-0 bottom-0 z-30">
+      {/* ── Mobile header (visible < md) ── */}
+      <header className="md:hidden flex items-center justify-between px-4 py-3 bg-gray-900/80 backdrop-blur-md border-b border-white/5 sticky top-0 z-30">
+        <div className="flex items-center gap-3">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/vibescout.png" alt="VibeScout" className="w-8 h-8 opacity-70" />
+          <h1 className="font-serif text-2xl text-white">Vibe Scout</h1>
+        </div>
+      </header>
+
+      {/* ── Main layout ── */}
+      <div className="flex flex-col md:flex-row flex-1 overflow-hidden md:pl-20 pb-[60px]">
+        {/* ── Left sidebar + About card hover group (desktop only) ── */}
+        <div className="hidden md:block group/sidebar fixed left-0 top-0 bottom-0 z-30">
           <aside className="w-20 h-full bg-gray-900/80 backdrop-blur-md flex flex-col items-center py-8 border-r border-white/5">
             <div className="flex-1" />
             <div className="flex flex-col items-center">
@@ -65,9 +74,9 @@ export default async function Home() {
         </div>
 
         {/* ── Center area ── */}
-        <main className="flex-1 relative flex items-center justify-center p-8">
+        <main className="flex-1 relative flex items-center justify-center p-4 md:p-8">
           {latest ? (
-            <div className="glass-panel glow-green p-8 flex flex-col items-center text-center w-full max-w-[340px] z-10">
+            <div className="glass-panel glow-green p-6 md:p-8 flex flex-col items-center text-center w-full max-w-[340px] z-10">
               <p className="text-sm text-gray-300 mb-2">Last Scouted</p>
 
               {/* Cover art */}
@@ -76,13 +85,13 @@ export default async function Home() {
                 <img
                   src={latest.coverUrl}
                   alt={`${latest.artist} – ${latest.title}`}
-                  className="w-32 h-32 rounded-lg object-cover shadow-lg mb-4"
+                  className="w-28 h-28 md:w-32 md:h-32 rounded-lg object-cover shadow-lg mb-4"
                 />
               )}
 
               <div className="mb-6 leading-tight">
                 <p className="font-serif text-xl text-gray-400">{latest.artist}</p>
-                <h2 className="font-serif text-3xl text-white">{latest.title}</h2>
+                <h2 className="font-serif text-2xl md:text-3xl text-white">{latest.title}</h2>
               </div>
 
               <div className="w-full flex flex-col gap-3">
@@ -114,15 +123,15 @@ export default async function Home() {
           )}
         </main>
 
-        {/* ── Right feed sidebar ── */}
-        <aside className="w-[350px] flex-shrink-0 flex flex-col py-8 pr-8 z-10">
-          <h2 className="font-serif text-3xl text-white mb-6 px-4">Feed</h2>
+        {/* ── Feed sidebar (right on desktop, below on mobile) ── */}
+        <aside className="w-full md:w-[350px] flex-shrink-0 flex flex-col py-4 md:py-8 px-4 md:px-0 md:pr-8 z-10 min-h-0 md:max-h-none">
+          <h2 className="font-serif text-3xl text-white mb-6 px-0 md:px-4">Feed</h2>
           <Feed initialTracks={serializedTracks} initialCursor={nextCursor} />
         </aside>
       </div>
 
       {/* ── Footer — fixed bottom ── */}
-      <footer className="fixed bottom-0 left-0 right-0 h-[60px] bg-gray-900/90 backdrop-blur-md border-t border-white/5 flex items-center justify-between px-8 z-20 pl-24">
+      <footer className="fixed bottom-0 left-0 right-0 h-[60px] bg-gray-900/90 backdrop-blur-md border-t border-white/5 flex items-center justify-between px-4 md:px-8 z-20 md:pl-24">
         {/* Left icons */}
         <div className="flex items-center gap-6 text-gray-400">
           <a href="https://github.com/simoneraffaelli/vibescout-web" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="GitHub">
