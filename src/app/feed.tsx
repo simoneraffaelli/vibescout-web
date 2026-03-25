@@ -26,8 +26,9 @@ const MONTHS = [
 
 function formatSpottedAt(isoDate: string) {
   const d = new Date(isoDate);
-  const now = Date.now();
-  const ageMin = Math.floor((now - d.getTime()) / 60_000);
+  // Deterministic pseudo-random value from timestamp for color variety
+  const ts = d.getTime();
+  const ageMin = (((ts >>> 16) ^ ts) & 0x7fffffff) % 80;
 
   const day = DAYS[d.getDay()];
   const date = `${day}, ${String(d.getDate()).padStart(2, "0")} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
