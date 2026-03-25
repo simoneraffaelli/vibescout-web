@@ -18,13 +18,15 @@ VibeScout Web is a self-hosted web dashboard and API for collecting songs recogn
 | Framework | Next.js 16 (App Router) |
 | Database | SQLite via better-sqlite3 + Prisma ORM |
 | Styling | Tailwind CSS v4 |
+| Fonts | Inter (body) + Playfair Display (headings) via next/font/google |
 | Auth | HMAC-signed cookie (admin) / hashed API keys (devices) |
 | Rate Limiting | In-memory sliding window |
+| Album Art | MusicBrainz API + Cover Art Archive |
 
 ### Data Model
 
-- **Device** — a registered client (phone, Raspberry Pi, etc.). Each has a hashed API key and can be enabled/disabled.
-- **Track** — a recognized song, tied to the device that spotted it. Contains `title`, `artist`, and `spottedAt` timestamp. Cascade-deletes when its device is removed.
+- **Device** — a registered client (phone, Raspberry Pi, etc.). Each has a hashed API key, can be enabled/disabled, and tracks its online status via `lastSeenAt`.
+- **Track** — a recognized song, tied to the device that spotted it. Contains `title`, `artist`, `coverUrl` (album art), and `spottedAt` timestamp. Cascade-deletes when its device is removed.
 
 ---
 
@@ -134,7 +136,7 @@ The `nixpacks.toml` also overrides the install phase to remove `package-lock.jso
 - **Database location** — SQLite persists to a file specified by `DATABASE_URL`. In development, this defaults to `./dev.db` in the project root. In production, use an absolute path on a persistent volume (e.g. `file:/data/vibescout.db`).
 - **Migrations** — `prisma migrate deploy` runs automatically on startup via the `start` script. No manual migration step needed.
 - **Rate limiting** — The rate limiter is in-memory. In a multi-process or multi-instance deployment, it won't share state across workers. Swap to Redis if running multiple instances.
-- **CSP headers** — In production, the Content-Security-Policy header does **not** include `unsafe-eval`. In development it does (React requires it for debugging).
+- **CSP headers** — In production, the Content-Security-Policy header does **not** include `unsafe-eval`. In development it does (React requires it for debugging). The `img-src` directive allows `coverartarchive.org`, `archive.org`, and `*.archive.org` for album cover art.
 - **CSRF protection** — All mutating requests to `/api/admin/*` verify the `Origin` header matches the `Host` header.
 - **Session cookies** — In production, cookies are set with `Secure`, `HttpOnly`, `SameSite=Lax`, and a 24-hour expiry. You must serve the app over HTTPS.
 
@@ -144,13 +146,35 @@ The `nixpacks.toml` also overrides the install phase to remove `package-lock.jso
 
 ### Browsing Tracks
 
-Navigate to the root URL (`/`). The homepage displays the 100 most recently spotted tracks in reverse chronological order. Each entry shows:
+Navigate to the root URL (`/`). The homepage features a responsive three-zone layout:
 
-- **Title** and **Artist**
-- **Device name** that spotted the track
-- **Timestamp** of when it was recognized
+**Desktop:**
+- **Left sidebar** — vertical "Vibe Scout" branding with logo; hover to reveal the About card
+- **Center** — "Last Scouted" hero card showing the most recent track with album cover art and links to Spotify / Apple Music
+- **Right** — scrollable feed with timeline, paginated via "Load more"
+- **Footer** — GitHub link, logo, privacy link
+
+**Mobile:**
+- Horizontal header with logo replaces the sidebar
+- Hero card and feed stack vertically
+- "Become a Scout" CTA appears above the feed
+
+Each feed entry shows:
+- **Timeline dot** — color-coded by age (green = fresh, orange = older)
+- **Spotted date and time** — date as "Day, DD Month YYYY", time as large serif text
+- **Album cover art** — fetched from MusicBrainz / Cover Art Archive (or a music icon fallback)
+- **Device name** and **Artist – Title**
+
+The feed also displays a **live scout count** ("X scouts online") beneath the "Feed" heading, based on device heartbeats.
 
 No login or authentication is required to view the feed.
+
+### Become a Scout
+
+A guide for joining the scout network is available at [`/become-a-scout.md`](public/become-a-scout.md). It covers:
+- How to register (email devs@simone.ooo)
+- Device requirements (Raspberry Pi, Android phone, etc.)
+- How to build a solar-powered "Scout Box" for 24/7 outdoor spotting
 
 ### API — Fetching Tracks
 
@@ -172,6 +196,7 @@ GET /api/tracks?limit=50&cursor=123
       "id": 42,
       "title": "Bohemian Rhapsody",
       "artist": "Queen",
+      "coverUrl": "https://coverartarchive.org/release/.../250.jpg",
       "spottedAt": "2026-03-24T12:00:00.000Z",
       "device": { "name": "Living Room Pi" }
     }
@@ -204,6 +229,8 @@ Content-Type: application/json
 **Constraints:**
 - `title` and `artist` are required, non-empty strings (max 500 characters each).
 - Rate limited to **30 requests per minute** per device.
+- Album cover art is automatically fetched from MusicBrainz / Cover Art Archive and stored with the track.
+- The device's `lastSeenAt` timestamp is updated on every track submission.
 
 **Success response** (`201`):
 
@@ -212,6 +239,7 @@ Content-Type: application/json
   "id": 42,
   "title": "Bohemian Rhapsody",
   "artist": "Queen",
+  "coverUrl": "https://coverartarchive.org/release/.../250.jpg",
   "spottedAt": "2026-03-24T12:00:00.000Z",
   "deviceId": 1
 }
@@ -224,6 +252,25 @@ Content-Type: application/json
 | `400` | Missing/invalid JSON body, or missing `title`/`artist` |
 | `401` | Missing `Authorization` header, or API key invalid/disabled |
 | `429` | Rate limit exceeded (check `Retry-After` header) |
+
+### Heartbeat (Online Status)
+
+Devices should send periodic heartbeats to signal they are online. This powers the "X scouts online" indicator on the public homepage and the online/offline status in the admin panel.
+
+```
+POST /api/heartbeat
+Authorization: Bearer srk_<your-api-key>
+```
+
+No request body is required. Rate limited to **2 requests per minute** per device.
+
+**Success response** (`200`):
+
+```json
+{ "ok": true }
+```
+
+**Online threshold:** A device is considered online if its last heartbeat (or track submission) was within the last **3 minutes**. Devices should send a heartbeat every **60 seconds**.
 
 ---
 
@@ -259,8 +306,10 @@ Click **Delete** to permanently remove a device and **all of its tracks** (casca
 
 Each device card shows:
 - **Name** and **status** (Active / Disabled)
+- **Online indicator** — green dot with "Online" or gray dot with "Offline" (based on heartbeat within the last 3 minutes)
 - **Track count** — total songs spotted by this device
 - **Created date**
+- **Last seen** — timestamp of the most recent heartbeat or track submission
 - **API key prefix** — the first 12 characters for identification (e.g., `srk_a1b2c3d4…`)
 
 ### Logging Out
@@ -275,7 +324,7 @@ All admin endpoints require a valid session cookie (set by the login flow).
 |---|---|---|
 | `POST` | `/api/admin/login` | Authenticate with `{ "password": "..." }` |
 | `POST` | `/api/admin/logout` | Clear admin session |
-| `GET` | `/api/admin/devices` | List all devices (masked keys) |
+| `GET` | `/api/admin/devices` | List all devices (masked keys, includes `lastSeenAt`) |
 | `POST` | `/api/admin/devices` | Create device: `{ "name": "..." }` → returns full API key |
 | `PATCH` | `/api/admin/devices/:id` | Update device: `{ "name?": "...", "enabled?": true/false }` |
 | `DELETE` | `/api/admin/devices/:id` | Delete device and all its tracks |
@@ -291,21 +340,23 @@ All admin endpoints require a valid session cookie (set by the login flow).
 | Cookies | `HttpOnly`, `SameSite=Lax`, `Secure` (production only) |
 | API keys | SHA-256 hashed before storage; plaintext shown once at creation |
 | CSRF | Origin header checked against Host on admin mutations |
-| Rate limiting | 5 login attempts/min/IP, 30 track submissions/min/device |
+| Rate limiting | 5 login attempts/min/IP, 30 track submissions/min/device, 2 heartbeats/min/device |
 | Security headers | `X-Content-Type-Options`, `X-Frame-Options: DENY`, `HSTS`, `Referrer-Policy`, `CSP` |
+| CSP img-src | `'self'`, `data:`, `coverartarchive.org`, `archive.org`, `*.archive.org` |
 | Input validation | Max lengths enforced on all string fields; JSON parsing errors handled |
 
 ---
 
 ## Quick Reference: Example Device Script
 
-A minimal shell script to push a track from a device:
+A minimal shell script to push a track and send heartbeats from a device:
 
 ```bash
 #!/bin/bash
 API_KEY="srk_your_key_here"
 HOST="https://your-domain-web.example.com"
 
+# Push a track
 curl -X POST "$HOST/api/tracks" \
   -H "Authorization: Bearer $API_KEY" \
   -H "Content-Type: application/json" \
@@ -313,3 +364,16 @@ curl -X POST "$HOST/api/tracks" \
 ```
 
 Usage: `./push-track.sh "Bohemian Rhapsody" "Queen"`
+
+```bash
+#!/bin/bash
+# Heartbeat loop — run in the background
+API_KEY="srk_your_key_here"
+HOST="https://your-domain-web.example.com"
+
+while true; do
+  curl -s -X POST "$HOST/api/heartbeat" \
+    -H "Authorization: Bearer $API_KEY"
+  sleep 60
+done
+```
