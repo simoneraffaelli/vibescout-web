@@ -21,6 +21,11 @@ export function proxy(req: NextRequest) {
     `default-src 'self'; script-src ${scriptSrc}; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://coverartarchive.org https://archive.org https://*.archive.org; font-src 'self'; connect-src 'self'; frame-ancestors 'none'`
   );
 
+  // ── Auto-refresh the public homepage every 5 minutes ──
+  if (req.nextUrl.pathname === "/") {
+    res.headers.set("Refresh", "300");
+  }
+
   // ── CSRF protection for admin mutation routes ──────────
   const method = req.method;
   if (
