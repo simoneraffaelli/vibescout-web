@@ -8,12 +8,13 @@ datasource db {
 }
 
 model Device {
-  id           Int      @id @default(autoincrement())
+  id           Int       @id @default(autoincrement())
   name         String
-  apiKeyHash   String   @unique
+  apiKeyHash   String    @unique
   apiKeyPrefix String
-  enabled      Boolean  @default(true)
-  createdAt    DateTime @default(now())
+  enabled      Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  lastSeenAt   DateTime?
   tracks       Track[]
 }
 

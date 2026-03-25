@@ -77,9 +77,16 @@ export async function POST(req: NextRequest) {
   // Fetch cover art from MusicBrainz / Cover Art Archive
   const coverUrl = await fetchCoverUrl(title, artist);
 
-  const track = await prisma.track.create({
-    data: { title, artist, coverUrl, deviceId: auth.device.id },
-  });
+  const [track] = await Promise.all([
+    prisma.track.create({
+      data: { title, artist, coverUrl, deviceId: auth.device.id },
+    }),
+    // Piggyback: update lastSeenAt on every track submission
+    prisma.device.update({
+      where: { id: auth.device.id },
+      data: { lastSeenAt: new Date() },
+    }),
+  ]);
 
   return NextResponse.json(track, { status: 201 });
 }

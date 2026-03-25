@@ -9,7 +9,15 @@ interface Device {
   apiKeyPrefix: string;
   enabled: boolean;
   createdAt: string;
+  lastSeenAt: string | null;
   _count: { tracks: number };
+}
+
+const ONLINE_THRESHOLD_MS = 3 * 60 * 1000; // 3 minutes
+
+function isOnline(lastSeenAt: string | null): boolean {
+  if (!lastSeenAt) return false;
+  return Date.now() - new Date(lastSeenAt).getTime() < ONLINE_THRESHOLD_MS;
 }
 
 export default function DevicesClient() {
@@ -167,10 +175,10 @@ export default function DevicesClient() {
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-semibold">
+                    <p className="font-semibold flex items-center gap-2">
                       {device.name}
                       <span
-                        className={`ml-2 inline-block rounded-full px-2 py-0.5 text-xs ${
+                        className={`inline-block rounded-full px-2 py-0.5 text-xs ${
                           device.enabled
                             ? "bg-green-900 text-green-300"
                             : "bg-red-900 text-red-300"
@@ -178,10 +186,27 @@ export default function DevicesClient() {
                       >
                         {device.enabled ? "Active" : "Disabled"}
                       </span>
+                      {device.enabled && (
+                        <span className="flex items-center gap-1 text-xs">
+                          <span
+                            className={`inline-block h-2 w-2 rounded-full ${
+                              isOnline(device.lastSeenAt)
+                                ? "bg-green-400 shadow-[0_0_6px_rgba(74,222,128,0.6)]"
+                                : "bg-zinc-600"
+                            }`}
+                          />
+                          <span className={isOnline(device.lastSeenAt) ? "text-green-400" : "text-zinc-500"}>
+                            {isOnline(device.lastSeenAt) ? "Online" : "Offline"}
+                          </span>
+                        </span>
+                      )}
                     </p>
                     <p className="mt-1 text-xs text-zinc-500">
                       {device._count.tracks} tracks · Created{" "}
                       {new Date(device.createdAt).toLocaleDateString()}
+                      {device.lastSeenAt && (
+                        <> · Last seen {new Date(device.lastSeenAt).toLocaleString()}</>
+                      )}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">

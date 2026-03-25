@@ -18,6 +18,7 @@ export async function GET() {
       apiKeyPrefix: true,
       enabled: true,
       createdAt: true,
+      lastSeenAt: true,
       _count: { select: { tracks: true } },
     },
   });

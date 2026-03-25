@@ -4,13 +4,22 @@ import Feed from "./feed";
 export const dynamic = "force-dynamic";
 
 const INITIAL_PAGE_SIZE = 20;
+const ONLINE_THRESHOLD_MS = 720 * 60 * 1000; // 720 minutes
 
 export default async function Home() {
-  const rawTracks = await prisma.track.findMany({
-    take: INITIAL_PAGE_SIZE + 1,
-    orderBy: { spottedAt: "desc" },
-    include: { device: { select: { name: true } } },
-  });
+  const [rawTracks, onlineScouts] = await Promise.all([
+    prisma.track.findMany({
+      take: INITIAL_PAGE_SIZE + 1,
+      orderBy: { spottedAt: "desc" },
+      include: { device: { select: { name: true } } },
+    }),
+    prisma.device.count({
+      where: {
+        enabled: true,
+        lastSeenAt: { gte: new Date(Date.now() - ONLINE_THRESHOLD_MS) },
+      },
+    }),
+  ]);
 
   const hasMore = rawTracks.length > INITIAL_PAGE_SIZE;
   const tracks = hasMore ? rawTracks.slice(0, INITIAL_PAGE_SIZE) : rawTracks;
@@ -125,7 +134,13 @@ export default async function Home() {
 
         {/* ── Feed sidebar (right on desktop, below on mobile) ── */}
         <aside className="w-full md:w-[350px] flex-shrink-0 flex flex-col py-4 md:py-8 px-4 md:px-0 md:pr-8 z-10 min-h-0 md:max-h-none">
-          <h2 className="font-serif text-3xl text-white mb-6 px-0 md:px-4">Feed</h2>
+          <h2 className="font-serif text-3xl text-white mb-2 px-0 md:px-4">Feed</h2>
+          <div className="flex items-center gap-1.5 mb-4 px-0 md:px-4">
+            <span className={`inline-block h-2 w-2 rounded-full ${onlineScouts > 0 ? "bg-green-400 shadow-[0_0_6px_rgba(74,222,128,0.6)]" : "bg-gray-600"}`} />
+            <span className="text-xs text-gray-400">
+              {onlineScouts} scout{onlineScouts !== 1 && "s"} online
+            </span>
+          </div>
           <Feed initialTracks={serializedTracks} initialCursor={nextCursor} />
         </aside>
       </div>
