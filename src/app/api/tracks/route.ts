@@ -9,6 +9,9 @@ const MAX_ARTIST_LENGTH = 500;
 const DEFAULT_PAGE_SIZE = 50;
 const MAX_PAGE_SIZE = 200;
 
+/** Ignore duplicate submissions of the same song from the same device within this window. */
+const DEDUP_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
+
 export async function GET(req: NextRequest) {
   const url = req.nextUrl;
   const limit = Math.min(
@@ -71,6 +74,35 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       { error: `title and artist must be under ${MAX_TITLE_LENGTH} characters` },
       { status: 400 }
+    );
+  }
+
+  // ── Deduplication: reject if this device spotted the same song recently ──
+  const recent = await prisma.track.findFirst({
+    where: {
+      deviceId: auth.device.id,
+      title: { equals: title },
+      artist: { equals: artist },
+      spottedAt: { gte: new Date(Date.now() - DEDUP_WINDOW_MS) },
+    },
+    orderBy: { spottedAt: "desc" },
+    select: { id: true, spottedAt: true },
+  });
+
+  if (recent) {
+    // Still update lastSeenAt so the device stays "online"
+    await prisma.device.update({
+      where: { id: auth.device.id },
+      data: { lastSeenAt: new Date() },
+    });
+
+    return NextResponse.json(
+      {
+        duplicate: true,
+        message: "Track already spotted recently — skipped",
+        existingId: recent.id,
+      },
+      { status: 200 }
     );
   }
 
