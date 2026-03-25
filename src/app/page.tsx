@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import Feed from "./feed";
+import TrackDisplay from "./track-display";
 
 export const dynamic = "force-dynamic";
 
@@ -34,8 +34,6 @@ export default async function Home() {
     spottedAt: t.spottedAt.toISOString(),
     device: { name: t.device.name },
   }));
-
-  const latest = tracks[0] ?? null;
 
   return (
     <div className="min-h-screen md:h-screen w-screen flex flex-col relative overflow-x-hidden md:overflow-hidden">
@@ -82,67 +80,12 @@ export default async function Home() {
           </div>
         </div>
 
-        {/* ── Center area ── */}
-        <main className="flex-1 relative flex items-center justify-center p-4 md:p-8">
-          {latest ? (
-            <div className="glass-panel glow-green p-6 md:p-8 flex flex-col items-center text-center w-full max-w-[340px] z-10">
-              <p className="text-sm text-gray-300 mb-2">Last Scouted</p>
-
-              {/* Cover art */}
-              {latest.coverUrl && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={latest.coverUrl}
-                  alt={`${latest.artist} – ${latest.title}`}
-                  className="w-28 h-28 md:w-32 md:h-32 rounded-lg object-cover shadow-lg mb-4"
-                />
-              )}
-
-              <div className="mb-6 leading-tight">
-                <p className="font-serif text-xl text-gray-400">{latest.artist}</p>
-                <h2 className="font-serif text-2xl md:text-3xl text-white">{latest.title}</h2>
-              </div>
-
-              <div className="w-full flex flex-col gap-3">
-                <a
-                  href={`https://open.spotify.com/search/${encodeURIComponent(latest.title + " " + latest.artist)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="glass-button w-full py-2.5 rounded-lg text-sm text-white font-medium text-center no-underline"
-                >
-                  Open in Spotify
-                </a>
-                <a
-                  href={`https://music.apple.com/us/search?term=${encodeURIComponent(latest.title + " " + latest.artist)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="glass-button w-full py-2.5 rounded-lg text-sm text-white font-medium text-center no-underline"
-                >
-                  Open in Apple Music
-                </a>
-              </div>
-            </div>
-          ) : (
-            <div className="glass-panel p-8 text-center max-w-[340px]">
-              <p className="text-gray-400 text-lg">No tracks spotted yet</p>
-              <p className="text-gray-500 text-sm mt-2">
-                Start recognizing songs from the app!
-              </p>
-            </div>
-          )}
-        </main>
-
-        {/* ── Feed sidebar (right on desktop, below on mobile) ── */}
-        <aside className="w-full md:w-[350px] flex-shrink-0 flex flex-col py-4 md:py-8 px-4 md:px-0 md:pr-8 z-10 min-h-0 md:max-h-none">
-          <h2 className="font-serif text-3xl text-white mb-2 px-0 md:px-4">Feed</h2>
-          <div className="flex items-center gap-1.5 mb-4 px-0 md:px-4">
-            <span className={`inline-block h-2 w-2 rounded-full ${onlineScouts > 0 ? "bg-green-400 shadow-[0_0_6px_rgba(74,222,128,0.6)]" : "bg-gray-600"}`} />
-            <span className="text-xs text-gray-400">
-              {onlineScouts} scout{onlineScouts !== 1 && "s"} online
-            </span>
-          </div>
-          <Feed initialTracks={serializedTracks} initialCursor={nextCursor} />
-        </aside>
+        {/* ── Center area + Feed (interactive client component) ── */}
+        <TrackDisplay
+          initialTracks={serializedTracks}
+          initialCursor={nextCursor}
+          onlineScouts={onlineScouts}
+        />
       </div>
 
       {/* ── Footer — fixed bottom ── */}

@@ -14,6 +14,8 @@ type Track = {
 type FeedProps = {
   initialTracks: Track[];
   initialCursor: number | null;
+  onTrackClick?: (track: Track) => void;
+  selectedTrackId?: number | null;
 };
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -64,7 +66,7 @@ function formatSpottedAt(isoDate: string) {
   return { date, time, dot };
 }
 
-export default function Feed({ initialTracks, initialCursor }: FeedProps) {
+export default function Feed({ initialTracks, initialCursor, onTrackClick, selectedTrackId }: FeedProps) {
   const [tracks, setTracks] = useState(initialTracks);
   const [cursor, setCursor] = useState(initialCursor);
   const [loading, setLoading] = useState(false);
@@ -144,7 +146,10 @@ export default function Feed({ initialTracks, initialCursor }: FeedProps) {
 
                   {/* Track info card */}
                   <div className="group/track relative">
-                    <div className="flex items-center gap-3 bg-white/5 rounded-lg p-2 border border-white/10">
+                    <div
+                      onClick={() => onTrackClick?.(track)}
+                      className={`flex items-center gap-3 bg-white/5 rounded-lg p-2 border transition-colors cursor-pointer ${selectedTrackId === track.id ? "border-green-400/40 bg-green-400/10" : "border-white/10 hover:border-white/20"}`}
+                    >
                       {track.coverUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
