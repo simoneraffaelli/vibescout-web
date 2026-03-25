@@ -143,36 +143,46 @@ export default function Feed({ initialTracks, initialCursor }: FeedProps) {
                   </div>
 
                   {/* Track info card */}
-                  <div className="flex items-center gap-3 bg-white/5 rounded-lg p-2 border border-white/10">
-                    {track.coverUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={track.coverUrl}
-                        alt={`${track.artist} – ${track.title}`}
-                        className="w-10 h-10 rounded object-cover flex-shrink-0 shadow-md"
-                      />
-                    ) : (
-                      <div className="w-10 h-10 rounded bg-gray-700/60 flex-shrink-0 flex items-center justify-center">
-                        <svg
-                          className="w-5 h-5 text-gray-500"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={1.5}
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M9 9l10.5-3m0 6.553v3.75a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 11-.99-3.467l2.31-.66a2.25 2.25 0 001.632-2.163zm0 0V2.25L9 5.25v10.303m0 0v3.75a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 01-.99-3.467l2.31-.66A2.25 2.25 0 009 15.553z"
-                          />
-                        </svg>
+                  <div className="group/track relative">
+                    <div className="flex items-center gap-3 bg-white/5 rounded-lg p-2 border border-white/10">
+                      {track.coverUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={track.coverUrl}
+                          alt={`${track.artist} – ${track.title}`}
+                          className="w-10 h-10 rounded object-cover flex-shrink-0 shadow-md"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded bg-gray-700/60 flex-shrink-0 flex items-center justify-center">
+                          <svg
+                            className="w-5 h-5 text-gray-500"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={1.5}
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M9 9l10.5-3m0 6.553v3.75a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 11-.99-3.467l2.31-.66a2.25 2.25 0 001.632-2.163zm0 0V2.25L9 5.25v10.303m0 0v3.75a2.25 2.25 0 01-1.632 2.163l-1.32.377a1.803 1.803 0 01-.99-3.467l2.31-.66A2.25 2.25 0 009 15.553z"
+                            />
+                          </svg>
+                        </div>
+                      )}
+                      <div className="overflow-hidden">
+                        <p className="text-[10px] text-gray-400 uppercase tracking-wider truncate">
+                          {track.device.name}
+                        </p>
+                        <p className="text-sm text-white font-medium truncate">
+                          {track.artist} &ndash; {track.title}
+                        </p>
                       </div>
-                    )}
-                    <div className="overflow-hidden">
-                      <p className="text-[10px] text-gray-400 uppercase tracking-wider truncate">
-                        {track.device.name}
-                      </p>
-                      <p className="text-sm text-white font-medium truncate">
+                    </div>
+
+                    {/* Popover — full artist & title on hover */}
+                    <div className="absolute left-0 right-0 bottom-full mb-2 z-20 glass-panel !bg-[rgba(17,24,39,0.95)] !backdrop-blur-xl p-3 opacity-0 translate-y-1 pointer-events-none transition-all duration-200 ease-out group-hover/track:opacity-100 group-hover/track:translate-y-0 group-hover/track:pointer-events-auto">
+                      <p className="text-xs text-gray-400 mb-1">{track.device.name}</p>
+                      <p className="text-sm text-white font-medium leading-snug">
                         {track.artist} &ndash; {track.title}
                       </p>
                     </div>
